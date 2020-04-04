@@ -1,6 +1,6 @@
-# employee_app
+# Employee App
 
-A new Flutter project.
+A simple app created using flutter. The app uses flutter http library to perform CRUD operations on a database using REST API.
 
 ## Getting Started
 
