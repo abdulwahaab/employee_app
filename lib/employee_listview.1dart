@@ -1,0 +1,114 @@
+import 'dart:async';
+import 'dart:convert';
+import 'employee_detail.dart';
+import 'DTOs/employee_DTO.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:employee_app/employee_edit.dart';
+
+class EmployeeListView extends StatefulWidget {
+  @override
+  _EmployeeListViewState createState() => _EmployeeListViewState();
+}
+
+class _EmployeeListViewState extends State<EmployeeListView> {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Employee>>(
+      future: _fetchEmployees(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          List<Employee> data = snapshot.data;
+          return _jobsListView(data);
+        } else if (snapshot.hasError) {
+          return Text("${snapshot.error}");
+        }
+        return CircularProgressIndicator();
+      },
+    );
+  }
+
+  Future<List<Employee>> _fetchEmployees() async {
+    final response =
+        await http.get('http://dummy.restapiexample.com/api/v1/employees');
+
+    if (response.statusCode == 200) {
+      var list = (json.decode(response.body) as List)
+          .map((data) => new Employee.fromJson(data))
+          .toList();
+      return list;
+    } else {
+      throw Exception('Failed to fetch employees');
+    }
+  }
+
+  ListView _jobsListView(data) {
+    return ListView.builder(
+        itemCount: data.length,
+        itemBuilder: (context, index) {
+          return getListItem(data[index], context);
+        });
+  }
+
+  Dismissible getListItem(dynamic employeeData, BuildContext context) {
+    return Dismissible(
+      direction: DismissDirection.endToStart,
+      key: new Key(employeeData.id),
+      onDismissed: (direction) {
+        print(employeeData.id);
+      },
+      background: new Container(
+        padding: EdgeInsets.only(right: 20.0),
+        color: Colors.red,
+        child: new Align(
+          alignment: Alignment.centerRight,
+          child: new Text(
+            'Delete',
+            textAlign: TextAlign.right,
+            style: new TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+      child: _tile(employeeData, context),
+    );
+  }
+
+  ListTile _tile(dynamic employeeData, BuildContext context) {
+    return ListTile(
+      title: Text(
+        employeeData.employeeName,
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 16,
+        ),
+      ),
+      subtitle: Text(employeeData.employeeSalary),
+      leading: Icon(
+        Icons.person,
+        color: Colors.indigo,
+      ),
+      trailing: GestureDetector(
+        child: Icon(
+          Icons.edit,
+          color: Colors.indigo,
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditEmployee(employee: employeeData),
+            ),
+          );
+        },
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EmployeeDetail(employee: employeeData),
+          ),
+        );
+      },
+    );
+  }
+}
